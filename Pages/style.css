@@ -1,0 +1,60 @@
+body {
+    color: white;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 10%;
+    margin: 0;
+    background-color: #272727;
+}
+
+h2,
+h3 {
+    text-align: center;
+}
+
+#main {
+    max-width: 35%;
+    padding: 2%;
+    background: rgba(67, 64, 64, 0.34);
+    border-radius: 16px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(6.6px);
+    border: 1px solid rgba(187, 186, 186, 0.57);
+}
+
+input {
+    width: 93.5%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid #bfbfbf;
+    border-radius: 4px;
+}
+
+button {
+    width: 97%;
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #255c1d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: rgb(48, 185, 30);
+}
+
+.tab-content {
+    display: none;
+}
+
+#tabs button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    cursor: pointer;
+}

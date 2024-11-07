@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Web Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
+    <script src="script.js" defer></script>
+</head>
+
+<body>
+
+    <h2>NHS Secure Portal</h2>
+
+    <div id="main">
+        <section id="logins-screen">
+            <h3>Sign in</h3>
+            <label for="accountType">Account Type:</label>
+            <select id="accountType">
+                <option value="Admin">Admin</option>
+                <option value="Patient">Patient</option>
+                <option value="Doctor">Doctor</option>
+            </select>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="authenticate()">Sign In</button>
+            <p id="error-message" style="color: red;"></p>
+        </section>
+
+        <section id="tabs" style="display: none;">
+            <p id="account-type"></p>
+            <button onclick="displaySection('Patient')">Patient</button>
+            <button onclick="displaySection('Admin')">Admin</button>
+            <button onclick="displaySection('Doctor')">Doctor</button>
+        </section>
+
+        <div id="Patient" class="tab-content" style="display: none;">
+            <h3>Patient Section</h3>
+            <p>Book appointments here.</p>
+            <button onclick="resetLogin()">Logout</button>
+        </div>
+
+        <div id="Admin" class="tab-content" style="display: none;">
+            <h3>Admin Dashboard</h3>
+            <p>Manage system records.</p>
+            <button onclick="resetLogin()">Logout</button>
+        </div>
+
+        <div id="Doctor" class="tab-content" style="display: none;">
+            <h3>Doctor's Area</h3>
+            <p>Manage patient information.</p>
+            <button onclick="resetLogin()">Logout</button>
+        </div>
+    </div>
+
+</body>
+
+</html>
