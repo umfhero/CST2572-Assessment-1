@@ -14,45 +14,65 @@
 
     <h2>NHS Secure Portal</h2>
 
-    <div id="main">
-        <section id="logins-screen">
-            <h3>Sign in</h3>
+    <div id="login-section">
+        <h3>Sign in</h3>
+
+        <div class="input-group">
             <label for="accountType">Account Type:</label>
-            <select id="accountType">
+            <select id="accountType" onchange="updateInputForAccountType()">
                 <option value="Admin">Admin</option>
                 <option value="Patient">Patient</option>
                 <option value="Doctor">Doctor</option>
             </select>
+        </div>
+
+        <div class="input-group">
             <input type="text" id="username" placeholder="Username" required>
+        </div>
+
+        <div class="input-group">
             <input type="password" id="password" placeholder="Password" required>
-            <button onclick="authenticate()">Sign In</button>
-            <p id="error-message" style="color: red;"></p>
-        </section>
-
-        <section id="tabs" style="display: none;">
-            <p id="account-type"></p>
-            <button onclick="displaySection('Patient')">Patient</button>
-            <button onclick="displaySection('Admin')">Admin</button>
-            <button onclick="displaySection('Doctor')">Doctor</button>
-        </section>
-
-        <div id="Patient" class="tab-content" style="display: none;">
-            <h3>Patient Section</h3>
-            <p>Book appointments here.</p>
-            <button onclick="resetLogin()">Logout</button>
+            <p id="password-info" style="color: grey; font-size: 0.9em; display: none;">
+                For Patients: Your password is the year of birth + LAST NAME (in all caps) + '@' + first name (all
+                lowercase).
+            </p>
         </div>
 
-        <div id="Admin" class="tab-content" style="display: none;">
-            <h3>Admin Dashboard</h3>
-            <p>Manage system records.</p>
-            <button onclick="resetLogin()">Logout</button>
-        </div>
+        <button onclick="authenticate()">Sign In</button>
+        <p id="error-message" style="color: red;"></p>
+    </div>
 
-        <div id="Doctor" class="tab-content" style="display: none;">
-            <h3>Doctor's Area</h3>
-            <p>Manage patient information.</p>
-            <button onclick="resetLogin()">Logout</button>
-        </div>
+    <div id="AdminPatientSection" style="display: none;">
+        <h3>Manage Patients</h3>
+        <ul id="patientList"></ul>
+        <form id="editPatientForm" style="display:none;">
+            <input id="patientName" type="text" placeholder="Name">
+            <input id="patientAddress" type="text" placeholder="Address">
+            <input id="patientDOB" type="text" placeholder="DOB">
+            <button id="savePatientButton" type="button">Save</button>
+        </form>
+    </div>
+
+    <div id="PatientAppointmentSection" style="display: none;">
+        <h3>Book Appointment</h3>
+        <input id="appointmentDate" type="date">
+        <button id="bookAppointmentButton">Book</button>
+    </div>
+
+    <div id="PatientMedicationSection" style="display: none;">
+        <h3>Medications</h3>
+        <ul id="medicationList"></ul>
+    </div>
+
+    <div id="DoctorPatientHistorySection" style="display: none;">
+        <h3>Patient History</h3>
+        <ul id="patientHistoryList"></ul>
+    </div>
+
+    <div id="DoctorPatientNotesSection" style="display: none;">
+        <h3>Medical Notes</h3>
+        <textarea id="patientNote" placeholder="Add a note..."></textarea>
+        <button id="addNoteButton">Add Note</button>
     </div>
 
 </body>
