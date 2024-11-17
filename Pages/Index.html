@@ -73,13 +73,17 @@
             <input id="appointmentReason" type="text" placeholder="Reason for appointment" required>
             <button id="BookAppointment" type="button" onclick="bookAppointment(loggedInUser)">Book Appointment</button>
         </form>
-    
+        <h4>Your Requested Prescriptions</h4>
+        <ul id="requestedPrescriptionsList"></ul>
+
         <h4>Your Appointments</h4>
         <ul id="appointmentList"></ul>
-    
+        
         <h4>Request Prescriptions</h4>
         <select id="prescriptionDropdown" multiple></select>
-        <button id="RequestPrescriptions" type="button" onclick="requestPrescriptions()">Request Prescriptions</button>
+        <button id="RequestPrescriptions" type="button" onclick="requestPrescriptions(loggedInUser)">Request
+            Prescriptions</button>
+
     
         <h4>Your Information</h4>
         <p id="patientInfo"></p>
@@ -87,6 +91,16 @@
         <h4>Medical Notes</h4>
         <ul id="medicalNotes"></ul>
     </div>
+
+    <div id="DoctorFunctions" style="display: none;">
+        <h3>Doctor Panel</h3>
+        <div id="doctorPatientListContainer">
+            <h4>Manage Patients</h4>
+            <ul id="doctorPatientList"></ul>
+        </div>
+
+    </div>
+
 
 
 
