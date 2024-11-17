@@ -15,7 +15,19 @@ h3 {
     text-align: center;
 }
 
+.green-button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
+.green-button:hover {
+    background-color: #218838;
+}
 
 input {
     width: 90%;

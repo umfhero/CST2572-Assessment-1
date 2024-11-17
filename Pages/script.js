@@ -88,7 +88,20 @@ function loadAndStoreData() {
             if (!response.ok) throw new Error('Patient data not found');
             return response.json();
         })
-        .then(data => storeData("patients", data))
+        .then(data => {
+            const encryptedData = data.map(patient => ({
+                NHS: secureEncrypt(patient.NHS),
+                Title: secureEncrypt(patient.Title),
+                First: secureEncrypt(patient.First),
+                Last: secureEncrypt(patient.Last),
+                DOB: secureEncrypt(patient.DOB),
+                Gender: secureEncrypt(patient.Gender),
+                Address: secureEncrypt(patient.Address),
+                Email: secureEncrypt(patient.Email),
+                Telephone: secureEncrypt(patient.Telephone)
+            }));
+            storeData("patients", encryptedData);
+        })
         .catch(error => console.error("Failed to retrieve patient data:", error));
 
     // Load medication data
@@ -122,7 +135,7 @@ function loadPatients() {
 
         patients.forEach(patient => {
             const listItem = document.createElement("li");
-            listItem.textContent = `${patient.First} ${patient.Last} - ${patient.NHS}`;
+            listItem.textContent = `${patient.First || "Unknown"} ${patient.Last || "Unknown"} - ${patient.NHS || "N/A"}`;
             const editButton = document.createElement("button");
             editButton.textContent = "Edit";
             editButton.onclick = () => editPatient(patient);
@@ -334,35 +347,52 @@ function loadDoctorPatients() {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        console.log("Patients retrieved from DB:", event.target.result); // Log raw data
-        const patients = event.target.result.map(patient => ({
-            ...patient,
-            NHS: secureDecrypt(patient.NHS),
-            First: secureDecrypt(patient.First),
-            Last: secureDecrypt(patient.Last),
-            DOB: secureDecrypt(patient.DOB),
-            Address: secureDecrypt(patient.Address),
-        }));
-        console.log("Decrypted Patients:", patients); // Log decrypted data
+        console.log("Raw Patients Data:", event.target.result); // Log raw data from IndexedDB
+
+        const patients = event.target.result.map(patient => {
+            try {
+                return {
+                    ...patient,
+                    NHS: secureDecrypt(patient.NHS),
+                    First: secureDecrypt(patient.First),
+                    Last: secureDecrypt(patient.Last),
+                    DOB: secureDecrypt(patient.DOB),
+                    Address: secureDecrypt(patient.Address),
+                };
+            } catch (error) {
+                console.error("Decryption error for patient:", patient, error);
+                return null; // Skip problematic entries
+            }
+        }).filter(patient => patient !== null); // Filter out invalid entries
+
+        console.log("Decrypted Patients Data:", patients); // Log decrypted patient data
 
         const doctorPatientList = document.getElementById("doctorPatientList");
         doctorPatientList.innerHTML = ""; // Clear previous entries
 
+        if (patients.length === 0) {
+            doctorPatientList.innerHTML = "<li>No patients found.</li>";
+            return;
+        }
+
         patients.forEach(patient => {
             const listItem = document.createElement("li");
-            listItem.textContent = `${patient.First} ${patient.Last} - ${patient.NHS}`;
+            listItem.textContent = `${patient.First || "Unknown"} ${patient.Last || "Unknown"} - ${patient.NHS || "N/A"}`;
 
-            // Action buttons for appointments, prescriptions, notes
+            // Create action buttons for appointments, prescriptions, and notes
             const viewAppointmentsButton = document.createElement("button");
             viewAppointmentsButton.textContent = "View Appointments";
+            viewAppointmentsButton.classList.add("green-button");
             viewAppointmentsButton.onclick = () => loadAppointmentsForDoctor(patient);
 
             const viewPrescriptionsButton = document.createElement("button");
             viewPrescriptionsButton.textContent = "View Prescriptions";
+            viewPrescriptionsButton.classList.add("green-button");
             viewPrescriptionsButton.onclick = () => loadPrescriptionsForDoctor(patient);
 
             const editNotesButton = document.createElement("button");
             editNotesButton.textContent = "Edit Notes";
+            editNotesButton.classList.add("green-button");
             editNotesButton.onclick = () => editPatientNotes(patient);
 
             listItem.appendChild(viewAppointmentsButton);
@@ -377,6 +407,7 @@ function loadDoctorPatients() {
         console.error("Failed to load patients for Doctor Panel:", event.target.error);
     };
 }
+
 
 
 function editPatientNotes(patient) {
@@ -418,7 +449,7 @@ function loadPatients() {
 
         patients.forEach((patient) => {
             const listItem = document.createElement("li");
-            listItem.textContent = `${patient.First} ${patient.Last} - ${patient.NHS}`;
+            listItem.textContent = `${patient.First || "Unknown"} ${patient.Last || "Unknown"} - ${patient.NHS || "N/A"}`;
             const editButton = document.createElement("button");
             editButton.textContent = "Edit";
             editButton.onclick = () => editPatient(patient);
@@ -755,13 +786,15 @@ function secureEncrypt(plainText) {
 
 function secureDecrypt(cipherText) {
     try {
+        if (!cipherText) throw new Error("Cipher text is empty or undefined");
         const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
         return bytes.toString(CryptoJS.enc.Utf8);
     } catch (error) {
-        console.error("Decryption failed for:", cipherText, error);
-        return "Decryption Error"; // Return a placeholder if decryption fails
+        console.error("Failed to decrypt text:", cipherText, error);
+        return "Unknown"; // Return a fallback value
     }
 }
+
 
 
 function sanitize(input) {
