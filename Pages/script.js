@@ -2,7 +2,7 @@
 //1985NORVILL@aeriell
 // ask which lines are encryption and how it works (what it is )
 let db;
-
+let dataLoaded = false;
 const DATABASE_NAME = "surgeryDatabase";
 const DATABASE_VERSION = 1;
 const ENCRYPTION_KEY = "secure-key";
@@ -12,6 +12,23 @@ const permissions = {
     Patient: { canBookAppointments: true, canViewMedication: true },
     Doctor: { canReviewPatientHistory: true }
 };
+function clearAndLoadData() {
+    const transaction = db.transaction(["patients"], "readwrite");
+    const store = transaction.objectStore("patients");
+
+    store.clear(); // Clear all existing records before loading new data
+
+    transaction.oncomplete = () => {
+        console.log("Cleared old patient data. Reloading...");
+        dataLoaded = false; // Reset the flag to allow fresh data loading
+        loadAndStoreData();
+    };
+
+    transaction.onerror = (event) => {
+        console.error("Error clearing patient data:", event.target.error);
+    };
+}
+
 
 // Initialize the IndexedDB database
 function initializeDatabase() {
@@ -60,6 +77,11 @@ function initializeDatabase() {
 
 
 function loadAndStoreData() {
+    if (dataLoaded) {
+        console.log("Data is already loaded. Skipping...");
+        return;
+    }
+    dataLoaded = true;
     // Load admin data
     fetch('/admin.json')
         .then(response => {
@@ -92,27 +114,44 @@ function loadAndStoreData() {
 
     // Load patient data
     fetch('/patients.json')
-    .then(response => {
-        if (!response.ok) throw new Error('Patient data not found');
-        return response.json();
-    })
-    .then(data => {
-        console.log("Loaded patient data from JSON:", data); // Verify the data here
-        const encryptedData = data.map(patient => ({
-            NHS: secureEncrypt(patient.NHS),
-            Title: secureEncrypt(patient.Title),
-            First: secureEncrypt(patient.First),
-            Last: secureEncrypt(patient.Last),
-            DOB: secureEncrypt(patient.DOB),
-            Gender: secureEncrypt(patient.Gender),
-            Address: secureEncrypt(patient.Address),
-            Email: secureEncrypt(patient.Email),
-            Telephone: secureEncrypt(patient.Telephone)
-        }));
-        console.log("Encrypted patient data:", encryptedData); // Verify encryption
-        storeData("patients", encryptedData);
-    })
-    .catch(error => console.error("Failed to retrieve patient data:", error));
+        .then(response => response.json())
+        .then(data => {
+            const transaction = db.transaction(["patients"], "readwrite");
+            const store = transaction.objectStore("patients");
+
+            data.forEach(async (patient) => {
+                const encryptedNHS = secureEncrypt(patient.NHS);
+                const request = store.get(encryptedNHS);
+
+                request.onsuccess = (event) => {
+                    if (!event.target.result) {
+                        console.log("Adding new patient:", patient.NHS);
+                        store.add({
+                            NHS: encryptedNHS,
+                            First: secureEncrypt(patient.First),
+                            Last: secureEncrypt(patient.Last),
+                            DOB: secureEncrypt(patient.DOB),
+                            Address: secureEncrypt(patient.Address),
+                            Email: secureEncrypt(patient.Email),
+                            Telephone: secureEncrypt(patient.Telephone),
+                            Gender: secureEncrypt(patient.Gender),
+                            Title: secureEncrypt(patient.Title),
+                        });
+                    } else {
+                        console.log(`Duplicate found: ${patient.NHS}. Skipping.`);
+                    }
+                };
+            });
+
+            transaction.oncomplete = () => {
+                console.log("Data loading complete.");
+            };
+
+            transaction.onerror = (event) => {
+                console.error("Error during data load:", event.target.error);
+            };
+        })
+        .catch(error => console.error("Error fetching patient data:", error));
 
 
     // Load medication data
@@ -442,6 +481,14 @@ function loadPrescriptionsForDoctor(patient) {
 }
 
 
+function isEncrypted(value) {
+    try {
+        secureDecrypt(value); // If decryption succeeds, it's encrypted
+        return true;
+    } catch {
+        return false; // If decryption fails, it's not encrypted
+    }
+}
 
 function loadDoctorPatients() {
     const transaction = db.transaction(["patients"], "readwrite"); // Allow writing to re-encrypt unencrypted data
@@ -669,26 +716,19 @@ function migrateData(callback) {
         const duplicatesToRemove = [];
 
         allPatients.forEach((patient) => {
-            try {
-                // Attempt to decrypt NHS to check if it's encrypted
-                const decryptedNHS = secureDecrypt(patient.NHS);
+            const isNHSAlreadyEncrypted = isEncrypted(patient.NHS);
 
-                if (seenNHS.has(decryptedNHS)) {
-                    // Mark as duplicate
-                    duplicatesToRemove.push(patient.NHS);
-                } else {
-                    // Keep track of unique NHS
-                    seenNHS.set(decryptedNHS, true);
-                }
-            } catch (error) {
-                // If decryption fails, handle as unencrypted data
-                const nhs = patient.NHS;
+            const nhs = isNHSAlreadyEncrypted
+                ? secureDecrypt(patient.NHS) // Decrypt to check duplicates
+                : patient.NHS;
 
-                if (seenNHS.has(nhs)) {
-                    // Mark as duplicate
-                    duplicatesToRemove.push(nhs);
-                } else {
-                    // Encrypt and keep track
+            if (seenNHS.has(nhs)) {
+                duplicatesToRemove.push(patient.NHS); // Mark duplicate for deletion
+            } else {
+                seenNHS.set(nhs, true);
+
+                if (!isNHSAlreadyEncrypted) {
+                    // Encrypt and update if not already encrypted
                     const encryptedPatient = {
                         ...patient,
                         NHS: secureEncrypt(patient.NHS),
@@ -702,15 +742,12 @@ function migrateData(callback) {
                         Title: secureEncrypt(patient.Title),
                     };
                     store.put(encryptedPatient);
-                    seenNHS.set(nhs, true);
                 }
             }
         });
 
         // Remove duplicates
-        duplicatesToRemove.forEach((nhs) => {
-            store.delete(nhs);
-        });
+        duplicatesToRemove.forEach((nhs) => store.delete(nhs));
 
         transaction.oncomplete = () => {
             console.log(`Migration completed: Removed ${duplicatesToRemove.length} duplicates.`);
