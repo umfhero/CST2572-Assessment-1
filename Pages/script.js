@@ -58,6 +58,7 @@ function initializeDatabase() {
 }
 
 
+
 function loadAndStoreData() {
     // Load admin data
     fetch('/admin.json')
@@ -540,51 +541,64 @@ function editPatient(patient) {
 function migrateData(callback) {
     const transaction = db.transaction(["patients"], "readwrite");
     const store = transaction.objectStore("patients");
-
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const patients = event.target.result;
+        const allPatients = event.target.result;
+        const seenNHS = new Map();
+        const duplicatesToRemove = [];
 
-        patients.forEach((patient) => {
-            let isEncrypted = false;
-
+        allPatients.forEach((patient) => {
             try {
-                // Check if NHS is already encrypted
-                secureDecrypt(patient.NHS);
-                isEncrypted = true; // If decryption works, it is encrypted
+                // Attempt to decrypt NHS to check if it's encrypted
+                const decryptedNHS = secureDecrypt(patient.NHS);
+
+                if (seenNHS.has(decryptedNHS)) {
+                    // Mark as duplicate
+                    duplicatesToRemove.push(patient.NHS);
+                } else {
+                    // Keep track of unique NHS
+                    seenNHS.set(decryptedNHS, true);
+                }
             } catch (error) {
-                isEncrypted = false; // If decryption fails, it is plaintext
-            }
+                // If decryption fails, handle as unencrypted data
+                const nhs = patient.NHS;
 
-            if (!isEncrypted) {
-                console.log(`Encrypting patient: ${patient.NHS}`);
-                const updatedPatient = {
-                    ...patient,
-                    NHS: secureEncrypt(patient.NHS),
-                    Title: secureEncrypt(patient.Title || ""),
-                    First: secureEncrypt(patient.First || ""),
-                    Last: secureEncrypt(patient.Last || ""),
-                    DOB: secureEncrypt(patient.DOB || ""),
-                    Address: secureEncrypt(patient.Address || ""),
-                    Email: secureEncrypt(patient.Email || ""),
-                    Telephone: secureEncrypt(patient.Telephone || ""),
-                    Gender: secureEncrypt(patient.Gender || ""),
-                };
-
-                store.put(updatedPatient); // Update the record with encrypted data
-            } else {
-                console.log(`Skipping already encrypted patient: ${patient.NHS}`);
+                if (seenNHS.has(nhs)) {
+                    // Mark as duplicate
+                    duplicatesToRemove.push(nhs);
+                } else {
+                    // Encrypt and keep track
+                    const encryptedPatient = {
+                        ...patient,
+                        NHS: secureEncrypt(patient.NHS),
+                        First: secureEncrypt(patient.First),
+                        Last: secureEncrypt(patient.Last),
+                        DOB: secureEncrypt(patient.DOB),
+                        Address: secureEncrypt(patient.Address),
+                        Email: secureEncrypt(patient.Email),
+                        Telephone: secureEncrypt(patient.Telephone),
+                        Gender: secureEncrypt(patient.Gender),
+                        Title: secureEncrypt(patient.Title),
+                    };
+                    store.put(encryptedPatient);
+                    seenNHS.set(nhs, true);
+                }
             }
         });
 
+        // Remove duplicates
+        duplicatesToRemove.forEach((nhs) => {
+            store.delete(nhs);
+        });
+
         transaction.oncomplete = () => {
-            console.info("Migration completed: No duplicates created.");
-            if (callback) callback(); // Notify when migration is done
+            console.log(`Migration completed: Removed ${duplicatesToRemove.length} duplicates.`);
+            if (callback) callback(); // Proceed after migration
         };
 
         transaction.onerror = (event) => {
-            console.error("Migration failed:", event.target.error);
+            console.error("Error during migration:", event.target.error);
         };
     };
 
@@ -592,6 +606,8 @@ function migrateData(callback) {
         console.error("Failed to retrieve patients for migration:", event.target.error);
     };
 }
+
+
 
 
 
