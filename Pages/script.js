@@ -110,19 +110,7 @@ function loadAndStoreData() {
             .catch(error => console.error("Failed to retrieve admin data:", error));
 
 
-        fetch('/doctor.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Doctor data not found');
-                return response.json();
-            })
-            .then(data => {
-                const encryptedData = data.map(user => ({
-                    ...user,
-                    password: secureEncrypt(user.password)
-                }));
-                storeData("doctors", encryptedData);
-            })
-            .catch(error => console.error("Failed to retrieve doctor data:", error));
+
 
  
         fetch('/patients.json')
@@ -798,7 +786,9 @@ function editPatient(patient) {
         console.error("Failed to update patient:", event.target.error);
     };
 
-}// migrates existing data (eg encrypts unencrypted fields) and removes duplicates
+}
+
+// migrates existing data (eg encrypts unencrypted fields) and removes duplicates
 function migrateData(callback) {
     const transaction = db.transaction(["patients"], "readwrite");
     const store = transaction.objectStore("patients");
@@ -1257,6 +1247,7 @@ function sanitize(input) {
     element.innerText = input;
     return element.innerHTML;
 }
+
 function preloadData(db) {
     // Preload data into 'patients'
     const patientTransaction = db.transaction(["patients"], "readwrite");
