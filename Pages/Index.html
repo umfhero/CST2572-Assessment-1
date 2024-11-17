@@ -97,6 +97,11 @@
         <h3>Doctor Panel</h3>
         <div id="doctorPatientListContainer">
             <h4>Manage Patients</h4>
+            <div id="search-container">
+                <input type="text" id="searchBar" placeholder="Search patients by name or NHS number..."
+                    oninput="filterPatients()" />
+            </div>
+
             <ul id="doctorPatientList"></ul> <!-- Ensure this ID matches in JS -->
         </div>
     </div>

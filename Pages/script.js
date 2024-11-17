@@ -128,6 +128,19 @@ function loadAndStoreData() {
         .catch(error => console.error("Failed to retrieve medication data:", error));
 }
 
+function filterPatients() {
+    const searchQuery = document.getElementById("searchBar").value.toLowerCase(); // Get the search query
+    const patientListItems = document.querySelectorAll("#doctorPatientList li"); // Get all patient list items
+
+    patientListItems.forEach((item) => {
+        const patientText = item.textContent.toLowerCase(); // Get the text content of the patient
+        if (patientText.includes(searchQuery)) {
+            item.style.display = ""; // Show the item if it matches the search
+        } else {
+            item.style.display = "none"; // Hide the item if it doesn't match
+        }
+    });
+}
 
 
 function loadPatients() {
