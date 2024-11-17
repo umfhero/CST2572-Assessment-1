@@ -1,5 +1,36 @@
+/* CSS Variables for Theme */
+:root {
+    --background-color: #272727;
+    /* Dark background for body */
+    --panel-bg-color: #3b3b3b;
+    /* Dark background for panels */
+    --panel-text-color: #f0f0f0;
+    /* Light text for panels */
+    --button-bg-color: #366922;
+    /* Green button background */
+    --button-bg-hover-color: #1d4b20;
+    /* Green button hover */
+    --danger-button-color: #ff4c4c;
+    /* Red button background */
+    --danger-button-hover-color: #811212;
+    /* Red button hover */
+    --form-input-border: #555;
+    /* Input border color */
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    /* Shadow for panels */
+    --logout-bg-color: #dd7979;
+    /* Logout button */
+    --logout-bg-hover: #811212;
+    /* Logout button hover */
+    --grid-bg-color: #3b3b3b;
+    /* Grid background */
+    --grid-text-color: #fff;
+    /* Grid text color */
+}
+
+/* General Body Styling */
 body {
-    color: white;
+    color: var(--panel-text-color);
     font-family: Arial, sans-serif;
     display: flex;
     flex-direction: column;
@@ -7,78 +38,72 @@ body {
     justify-content: center;
     padding-top: 8%;
     margin: 0;
-    background-color: #272727;
+    background-color: var(--background-color);
 }
 
+/* Headings */
 h2,
 h3 {
     text-align: center;
 }
 
+h2 {
+    color: var(--panel-text-color);
+}
+
+/* Buttons */
+button,
 .green-button {
-    background-color: #28a745;
-    color: white;
+    width: 115%;
+    padding: 4%;
+    margin-top: 10px;
     border: none;
-    padding: 10px 15px;
-    margin: 5px;
-    border-radius: 5px;
+    border-radius: 4px;
+    color: white;
     cursor: pointer;
+    font-size: 1em;
+}
+
+.green-button {
+    background-color: var(--button-bg-color);
 }
 
 .green-button:hover {
-    background-color: #218838;
+    background-color: var(--button-bg-hover-color);
 }
 
+button {
+    background-color: var(--button-bg-color);
+}
+
+button:hover {
+    background-color: var(--button-bg-hover-color);
+}
+
+/* Inputs */
 input {
     width: 90%;
     padding: 13px;
     margin-top: 8px;
-    border: 1px solid #bfbfbf;
+    border: 1px solid var(--form-input-border);
     border-radius: 4px;
+    background-color: #444;
+    color: var(--panel-text-color);
 }
 
-button {
-    width: 115%;
-    padding: 4%;
-    margin-top: 10px;
-    background-color: #255c1d;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: rgb(48, 185, 30);
-}
-
-.tab-content {
-    display: none;
-}
-
-#tabs button {
-    width: 100%;
-    padding: 8px;
-    margin-top: 8px;
-    cursor: pointer;
-}
-
-/* Admin Panel Wrapper */
+/* Admin Panel */
 #AdminFunctions {
-    background-color: #e9e9e98c;
+    background-color: var(--panel-bg-color);
     padding: 20px;
     margin: 20px auto;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px var(--shadow-color);
     width: 60%;
-
 }
 
-/* Section Headings */
 #AdminFunctions h3,
 #AdminFunctions h4 {
-    color: #333;
-    font-family: Arial, sans-serif;
+    color: var(--panel-text-color);
     margin-bottom: 15px;
 }
 
@@ -93,69 +118,23 @@ button:hover {
 
 #addPatientForm input {
     padding: 10px;
-    border: 1px solid #1d1212;
+    border: 1px solid var(--form-input-border);
     border-radius: 4px;
     font-size: 1em;
+    background-color: #444;
+    color: var(--panel-text-color);
 }
 
 #addPatientForm button {
     padding: 10px 15px;
-    border: none;
-    background-color: #366922;
-    color: white;
+    background-color: var(--button-bg-color);
     font-size: 1em;
     font-weight: bold;
     width: 40%;
-    border-radius: 4px;
-    cursor: pointer;
-}
-/* Book Appointment Button */
-#BookAppointment {
-    width: 30%;
-    padding: 10px 15px;
-    font-size: 0.9em;
-    border: none;
-    background-color: #366922;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-#BookAppointment:hover {
-    background-color: #1d4b20;
-}
-
-/* Request Prescriptions Button */
-#RequestPrescriptions {
-    width: 30%;
-    padding: 10px 15px;
-    font-size: 0.9em;
-    border: none;
-    background-color: #5a89c2;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-#RequestPrescriptions:hover {
-    background-color: #1a3d68;
-}
-
-/* Prescription Dropdown */
-#prescriptionDropdown {
-    width: 50%;
-    height: auto;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    display: block;
 }
 
 #addPatientForm button:hover {
-    background-color: #1d4b20;
+    background-color: var(--button-bg-hover-color);
 }
 
 /* Patient List */
@@ -171,43 +150,37 @@ button:hover {
     justify-content: space-between;
     align-items: center;
     padding: 10px;
-    border: 1px solid #8d8d8d;
+    border: 1px solid var(--form-input-border);
     border-radius: 4px;
     margin-bottom: 10px;
-    background-color: #7e7d7d;
+    background-color: var(--panel-bg-color);
+    color: var(--panel-text-color);
 }
 
 #patientList button {
     padding: 10px 10px;
-    border: none;
     border-radius: 4px;
-    cursor: pointer;
     font-size: 20px;
     margin-left: 10%;
-
-   
 }
 
 #patientList button:nth-child(1) {
-    background-color: #366922;
-    color: white;
+    background-color: var(--button-bg-color);
 }
 
 #patientList button:nth-child(1):hover {
-    background-color: #1d4b20;
+    background-color: var(--button-bg-hover-color);
 }
 
 #patientList button:nth-child(2) {
-    background-color: #ff4c4c;
-    color: white;
+    background-color: var(--danger-button-color);
 }
 
 #patientList button:nth-child(2):hover {
-    background-color: #811212;
+    background-color: var(--danger-button-hover-color);
 }
 
-
-/* logout sectiojn */
+/* Logout Section */
 #logout-button {
     position: fixed;
     top: 10px;
@@ -217,16 +190,144 @@ button:hover {
 }
 
 #logout-button button {
-        cursor: pointer;
-    background-color: #dd7979;
-    color: white;
+    background-color: var(--logout-bg-color);
     padding: 10px 20px;
-    border: none;
     border-radius: 4px;
     font-size: 1em;
-
 }
 
 #logout-button button:hover {
-    background-color: #811212;
+    background-color: var(--logout-bg-hover);
+}
+
+/* Patient Panel */
+#PatientFunctions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: var(--panel-bg-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 6px var(--shadow-color);
+    color: var(--panel-text-color);
+}
+
+#patientInfo {
+    background-color: var(--panel-bg-color);
+    padding: 15px;
+    border: 1px solid var(--form-input-border);
+    border-radius: 5px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    color: var(--panel-text-color);
+}
+
+/* Book Appointment Button */
+#BookAppointment {
+    width: 30%;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    background-color: var(--button-bg-color);
+    margin-top: 10px;
+}
+
+#BookAppointment:hover {
+    background-color: var(--button-bg-hover-color);
+}
+
+/* Request Prescriptions Button */
+#RequestPrescriptions {
+    width: 30%;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    background-color: var(--button-bg-color);
+    margin-top: 10px;
+}
+
+#RequestPrescriptions:hover {
+    background-color: var(--button-bg-hover-color);
+}
+
+/* Prescription Dropdown */
+#prescriptionDropdown {
+    width: 50%;
+    padding: 8px;
+    border: 1px solid var(--form-input-border);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #444;
+    color: var(--panel-text-color);
+}
+
+/* Prescription Dropdown Hover Effect */
+#prescriptionDropdown option:hover {
+    background-color: var(--button-bg-color);
+    /* Green background for hover */
+    color: var(--panel-text-color);
+    /* Ensure text color remains readable */
+}
+
+/* Requested Prescriptions List */
+#requestedPrescriptionsList {
+    margin-top: 10px;
+    background-color: var(--panel-bg-color);
+    padding: 15px;
+    border: 1px solid var(--form-input-border);
+    border-radius: 5px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Tabs */
+.tab-content {
+    display: none;
+}
+
+#tabs button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    cursor: pointer;
+    background-color: var(--button-bg-color);
+    color: var(--panel-text-color);
+}
+
+#tabs button:hover {
+    background-color: var(--button-bg-hover-color);
+}
+
+/* Headings */
+h4 {
+    margin-bottom: 10px;
+    color: var(--panel-text-color);
+}
+
+/* Patient Info Grid - Compact Layout */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    background-color: var(--grid-bg-color);
+    padding: 15px;
+    border: 1px solid var(--form-input-border);
+    border-radius: 5px;
+    margin-bottom: 20px;
+    color: var(--grid-text-color);
+    width: 100%;
+    max-width: 600px;
+}
+
+.grid-container div {
+    font-size: 1em;
+}
+
+.grid-container .label {
+    font-weight: bold;
+    text-align: left;
+}
+
+.grid-container .value {
+    text-align: left;
 }

@@ -242,18 +242,32 @@ function authenticate() {
 
     errorMessage.textContent = "";
 
-    const transaction = db.transaction(["administrators"], "readonly");
-    const store = transaction.objectStore("administrators");
-    const request = store.get(username);
+    if (accountType === "Patient") {
+        // Patient login logic
+        const transaction = db.transaction(["patients"], "readonly");
+        const store = transaction.objectStore("patients");
+        const request = store.getAll();
 
-    request.onsuccess = (event) => {
-        const user = event.target.result;
+        request.onsuccess = (event) => {
+            const patients = event.target.result;
 
-        if (user) {
-            const expectedPassword = secureDecrypt(user.password);
+            const matchingPatient = patients.find(patient => {
+                const decryptedNHS = secureDecrypt(patient.NHS);
+                const decryptedLastName = secureDecrypt(patient.Last).toUpperCase();
+                const decryptedFirstName = secureDecrypt(patient.First).toLowerCase();
+                const decryptedDOB = secureDecrypt(patient.DOB);
 
-            if (expectedPassword === password) {
-                loggedInUser = user; // Set the global loggedInUser variable
+                // Extract the year of birth
+                const yearOfBirth = decryptedDOB.split("/")[2];
+
+                // Expected password format
+                const expectedPassword = `${yearOfBirth}${decryptedLastName}@${decryptedFirstName}`;
+
+                return decryptedNHS === username && expectedPassword === password;
+            });
+
+            if (matchingPatient) {
+                loggedInUser = matchingPatient; // Set the global loggedInUser variable
 
                 // Hide the login section
                 document.getElementById("login-section").style.display = "none";
@@ -261,27 +275,60 @@ function authenticate() {
                 // Show the logout button
                 document.getElementById("logout-button").style.display = "block";
 
-                // Display panels based on account type
-                if (accountType === "Admin") {
-                    showAdminPanel(user);
-                } else if (accountType === "Doctor") {
-                    showDoctorPanel(user);
-                } else if (accountType === "Patient") {
-                    showPatientPanel(user);
+                // Show the patient panel
+                showPatientPanel(matchingPatient);
+            } else {
+                errorMessage.textContent = "Invalid NHS number or password.";
+            }
+        };
+
+        request.onerror = (event) => {
+            errorMessage.textContent = "Error retrieving patient data.";
+            console.error("Error retrieving patient data:", event);
+        };
+    } else {
+        // Handle Admin and Doctor authentication
+        const storeName = accountType === "Admin" ? "administrators" : "doctors";
+        const transaction = db.transaction([storeName], "readonly");
+        const store = transaction.objectStore(storeName);
+        const request = store.get(username);
+
+        request.onsuccess = (event) => {
+            const user = event.target.result;
+
+            if (user) {
+                const expectedPassword = secureDecrypt(user.password);
+
+                if (expectedPassword === password) {
+                    loggedInUser = user; // Set the global loggedInUser variable
+
+                    // Hide the login section
+                    document.getElementById("login-section").style.display = "none";
+
+                    // Show the logout button
+                    document.getElementById("logout-button").style.display = "block";
+
+                    // Display panels based on account type
+                    if (accountType === "Admin") {
+                        showAdminPanel(user);
+                    } else if (accountType === "Doctor") {
+                        showDoctorPanel(user);
+                    }
+                } else {
+                    errorMessage.textContent = "Invalid username or password.";
                 }
             } else {
-                errorMessage.textContent = "Invalid username or password.";
+                errorMessage.textContent = "User not found.";
             }
-        } else {
-            errorMessage.textContent = "User not found.";
-        }
-    };
+        };
 
-    request.onerror = (event) => {
-        errorMessage.textContent = "Error retrieving user data.";
-        console.error("Error retrieving user data:", event);
-    };
+        request.onerror = (event) => {
+            errorMessage.textContent = "Error retrieving user data.";
+            console.error("Error retrieving user data:", event);
+        };
+    }
 }
+
 
 
 
@@ -889,12 +936,40 @@ function loadRequestedPrescriptions(user) {
 
 
 function loadPatientInfo(user) {
-    const patientInfo = `Name: ${user.First} ${user.Last}
-    NHS: ${user.NHS}
-    DOB: ${user.DOB}
-    Address: ${user.Address}`;
-    document.getElementById("patientInfo").textContent = patientInfo;
+    const patientInfo = document.getElementById("patientInfo");
+
+    // Clear existing content
+    patientInfo.innerHTML = "";
+
+    // Create key-value pairs for display
+    const infoMap = {
+        "NHS": secureDecrypt(user.NHS),
+        "Title": secureDecrypt(user.Title),
+        "First Name": secureDecrypt(user.First),
+        "Last Name": secureDecrypt(user.Last),
+        "Date of Birth": secureDecrypt(user.DOB),
+        "Gender": secureDecrypt(user.Gender),
+        "Address": secureDecrypt(user.Address),
+        "Email": secureDecrypt(user.Email),
+        "Telephone": secureDecrypt(user.Telephone)
+    };
+
+    // Populate grid with key-value pairs
+    Object.entries(infoMap).forEach(([key, value]) => {
+        const labelDiv = document.createElement("div");
+        labelDiv.textContent = key + ":";
+        labelDiv.classList.add("label");
+
+        const valueDiv = document.createElement("div");
+        valueDiv.textContent = value || "N/A";
+        valueDiv.classList.add("value");
+
+        patientInfo.appendChild(labelDiv);
+        patientInfo.appendChild(valueDiv);
+    });
 }
+
+
 
 function secureEncrypt(plainText) {
     return CryptoJS.AES.encrypt(plainText, ENCRYPTION_KEY).toString();
