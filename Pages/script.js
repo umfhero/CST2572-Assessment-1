@@ -2,6 +2,7 @@
 //1985NORVILL@aeriell
 // ask which lines are encryption and how it works (what it is )
 let db;
+
 const DATABASE_NAME = "surgeryDatabase";
 const DATABASE_VERSION = 1;
 const ENCRYPTION_KEY = "secure-key";
@@ -34,9 +35,11 @@ function initializeDatabase() {
         db.createObjectStore("medications", { keyPath: "id" });
         db.createObjectStore("appointments", { autoIncrement: true });
         db.createObjectStore("notes", { autoIncrement: true });
+        db.createObjectStore("prescriptions", { autoIncrement: true }); // Ensure prescriptions store exists
         console.info("Database schema created with object stores");
     };
 }
+
 
 function loadPatients() {
     const transaction = db.transaction(["patients"], "readonly");
@@ -145,6 +148,8 @@ function authenticate() {
             }
 
             if (expectedPassword === password) {
+                loggedInUser = user; // Set the global loggedInUser variable
+
                 // Hide the login section
                 document.getElementById("login-section").style.display = "none";
 
@@ -370,12 +375,13 @@ function bookAppointment(user) {
 
     transaction.oncomplete = () => {
         alert("Appointment booked successfully!");
-        document.getElementById("appointmentForm").reset();
+        document.getElementById("appointmentForm").reset(); // Clear form inputs
         loadAppointments(user); // Reload appointments for the user
     };
 
     transaction.onerror = (event) => {
         console.error("Failed to book appointment:", event.target.error);
+        alert("Failed to book the appointment. Please try again.");
     };
 }
 
@@ -457,24 +463,33 @@ function requestPrescriptions(user) {
         return;
     }
 
-    const transaction = db.transaction(["appointments"], "readwrite");
-    const store = transaction.objectStore("appointments");
-    const prescriptionRequest = {
-        userNHS: user.NHS,
-        prescriptions: selectedOptions,
-        timestamp: new Date().toISOString()
-    };
+    const transaction = db.transaction(["prescriptions"], "readwrite");
+    const store = transaction.objectStore("prescriptions");
 
-    store.add(prescriptionRequest);
+    // Save each selected prescription to the IndexedDB
+    selectedOptions.forEach((prescription) => {
+        const newPrescriptionRequest = {
+            NHS: secureEncrypt(user.NHS),
+            prescription: secureEncrypt(prescription),
+            timestamp: secureEncrypt(new Date().toISOString()),
+        };
+
+        store.add(newPrescriptionRequest);
+    });
 
     transaction.oncomplete = () => {
         alert("Prescription request submitted successfully!");
+        // Optionally clear the selection if desired
+        prescriptionDropdown.value = ""; // Clear selection
     };
 
     transaction.onerror = (event) => {
         console.error("Failed to request prescriptions:", event.target.error);
+        alert("Failed to submit the prescription request. Please try again.");
     };
 }
+
+
 
 
 
