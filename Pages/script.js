@@ -552,9 +552,9 @@ function migrateData(callback) {
             try {
                 // Check if NHS is already encrypted
                 secureDecrypt(patient.NHS);
-                isEncrypted = true;
+                isEncrypted = true; // If decryption works, it is encrypted
             } catch (error) {
-                isEncrypted = false; // NHS is not encrypted
+                isEncrypted = false; // If decryption fails, it is plaintext
             }
 
             if (!isEncrypted) {
@@ -562,23 +562,24 @@ function migrateData(callback) {
                 const updatedPatient = {
                     ...patient,
                     NHS: secureEncrypt(patient.NHS),
-                    Title: secureEncrypt(patient.Title),
-                    First: secureEncrypt(patient.First),
-                    Last: secureEncrypt(patient.Last),
-                    DOB: secureEncrypt(patient.DOB),
-                    Address: secureEncrypt(patient.Address),
-                    Email: secureEncrypt(patient.Email),
-                    Telephone: secureEncrypt(patient.Telephone),
+                    Title: secureEncrypt(patient.Title || ""),
+                    First: secureEncrypt(patient.First || ""),
+                    Last: secureEncrypt(patient.Last || ""),
+                    DOB: secureEncrypt(patient.DOB || ""),
+                    Address: secureEncrypt(patient.Address || ""),
+                    Email: secureEncrypt(patient.Email || ""),
+                    Telephone: secureEncrypt(patient.Telephone || ""),
+                    Gender: secureEncrypt(patient.Gender || ""),
                 };
 
-                store.put(updatedPatient); // Replace old record with encrypted one
+                store.put(updatedPatient); // Update the record with encrypted data
             } else {
                 console.log(`Skipping already encrypted patient: ${patient.NHS}`);
             }
         });
 
         transaction.oncomplete = () => {
-            console.info("Migration completed: All patient records are now encrypted.");
+            console.info("Migration completed: No duplicates created.");
             if (callback) callback(); // Notify when migration is done
         };
 
@@ -591,6 +592,7 @@ function migrateData(callback) {
         console.error("Failed to retrieve patients for migration:", event.target.error);
     };
 }
+
 
 
 
@@ -875,6 +877,7 @@ function preloadData(db) {
     adminTransaction.onerror = (event) => {
         console.error("Error adding default administrators:", event.target.error);
     };
+    
 }
 
 document.addEventListener("DOMContentLoaded", initializeDatabase);
