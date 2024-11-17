@@ -1,11 +1,14 @@
+//Test patient login:
 //1055801944
 //1985NORVILL@aeriell
-// ask which lines are encryption and how it works (what it is )
+
+
+// setup for the IndexedDB database and encryption
 let db;
 let dataLoaded = false;
 const DATABASE_NAME = "surgeryDatabase";
 const DATABASE_VERSION = 1;
-const ENCRYPTION_KEY = "secure-key";
+const ENCRYPTION_KEY = "t&{U8L[Kx27X"; // for encrypting sensitive info like passwords and NHS numbers
 
 const permissions = {
     Admin: { canManagePatients: true },
