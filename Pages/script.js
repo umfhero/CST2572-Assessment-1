@@ -287,10 +287,9 @@ function authenticate() {
             console.error("Error retrieving patient data:", event);
         };
     } else {
-        // Handle Admin and Doctor authentication
-        const storeName = accountType === "Admin" ? "administrators" : "doctors";
-        const transaction = db.transaction([storeName], "readonly");
-        const store = transaction.objectStore(storeName);
+        // Shared logic for Admin and Doctor accounts
+        const transaction = db.transaction(["administrators"], "readonly");
+        const store = transaction.objectStore("administrators");
         const request = store.get(username);
 
         request.onsuccess = (event) => {
@@ -328,6 +327,7 @@ function authenticate() {
         };
     }
 }
+
 
 
 
