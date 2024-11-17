@@ -256,23 +256,20 @@ function showAdminPanel(user) {
     loadPatients();
 }
 function showDoctorPanel(user) {
-    // Display the Doctor Panel
     const doctorPanel = document.getElementById("DoctorFunctions");
-    doctorPanel.style.display = "block";
+    if (doctorPanel) {
+        doctorPanel.style.display = "block";
 
-    // Ensure patients are loaded into the Doctor Panel
-    loadDoctorPatients(); // Load the list of patients
+        // Load patients for the doctor
+        loadDoctorPatients();
 
-    // Clear any old data related to appointments or prescriptions for this session
-    const appointmentList = document.getElementById("doctorAppointmentList");
-    const prescriptionList = document.getElementById("doctorPrescriptionList");
-    appointmentList.innerHTML = "";
-    prescriptionList.innerHTML = "";
-
-    // Update the panel heading with the doctor's username
-    const doctorHeading = document.querySelector("#DoctorFunctions h3");
-    doctorHeading.textContent = `Doctor Panel - Logged in as ${user.username}`;
+        const doctorHeading = document.querySelector("#DoctorFunctions h3");
+        doctorHeading.textContent = `Doctor Panel - Logged in as ${user.username}`;
+    } else {
+        console.error("Doctor Panel not found in the DOM.");
+    }
 }
+
 
 
 
@@ -337,6 +334,7 @@ function loadDoctorPatients() {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
+        console.log("Patients retrieved from DB:", event.target.result); // Log raw data
         const patients = event.target.result.map(patient => ({
             ...patient,
             NHS: secureDecrypt(patient.NHS),
@@ -345,15 +343,16 @@ function loadDoctorPatients() {
             DOB: secureDecrypt(patient.DOB),
             Address: secureDecrypt(patient.Address),
         }));
+        console.log("Decrypted Patients:", patients); // Log decrypted data
 
         const doctorPatientList = document.getElementById("doctorPatientList");
-        doctorPatientList.innerHTML = ""; // Clear any previous entries
+        doctorPatientList.innerHTML = ""; // Clear previous entries
 
         patients.forEach(patient => {
             const listItem = document.createElement("li");
             listItem.textContent = `${patient.First} ${patient.Last} - ${patient.NHS}`;
 
-            // Create action buttons for each patient
+            // Action buttons for appointments, prescriptions, notes
             const viewAppointmentsButton = document.createElement("button");
             viewAppointmentsButton.textContent = "View Appointments";
             viewAppointmentsButton.onclick = () => loadAppointmentsForDoctor(patient);
@@ -366,7 +365,6 @@ function loadDoctorPatients() {
             editNotesButton.textContent = "Edit Notes";
             editNotesButton.onclick = () => editPatientNotes(patient);
 
-            // Append buttons to the list item
             listItem.appendChild(viewAppointmentsButton);
             listItem.appendChild(viewPrescriptionsButton);
             listItem.appendChild(editNotesButton);
@@ -376,7 +374,7 @@ function loadDoctorPatients() {
     };
 
     request.onerror = (event) => {
-        console.error("Failed to load patients for doctor panel:", event.target.error);
+        console.error("Failed to load patients for Doctor Panel:", event.target.error);
     };
 }
 
@@ -756,9 +754,15 @@ function secureEncrypt(plainText) {
 }
 
 function secureDecrypt(cipherText) {
-    const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    try {
+        const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (error) {
+        console.error("Decryption failed for:", cipherText, error);
+        return "Decryption Error"; // Return a placeholder if decryption fails
+    }
 }
+
 
 function sanitize(input) {
     const element = document.createElement('div');
