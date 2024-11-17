@@ -77,95 +77,106 @@ function initializeDatabase() {
 
 
 function loadAndStoreData() {
-    if (dataLoaded) {
-        console.log("Data is already loaded. Skipping...");
-        return;
-    }
-    dataLoaded = true;
-    // Load admin data
-    fetch('/admin.json')
-        .then(response => {
-            if (!response.ok) throw new Error('Admin data not found');
-            return response.json();
-        })
-        .then(data => {
-            const encryptedData = data.map(user => ({
-                ...user,
-                password: secureEncrypt(user.password)
-            }));
-            storeData("administrators", encryptedData);
-        })
-        .catch(error => console.error("Failed to retrieve admin data:", error));
+    // Check if patients data already exists
+    const transaction = db.transaction(["patients"], "readonly");
+    const store = transaction.objectStore("patients");
+    const request = store.getAll();
 
-    // Load doctor data
-    fetch('/doctor.json')
-        .then(response => {
-            if (!response.ok) throw new Error('Doctor data not found');
-            return response.json();
-        })
-        .then(data => {
-            const encryptedData = data.map(user => ({
-                ...user,
-                password: secureEncrypt(user.password)
-            }));
-            storeData("doctors", encryptedData);
-        })
-        .catch(error => console.error("Failed to retrieve doctor data:", error));
+    request.onsuccess = (event) => {
+        const existingPatients = event.target.result;
 
-    // Load patient data
-    fetch('/patients.json')
-        .then(response => response.json())
-        .then(data => {
-            const transaction = db.transaction(["patients"], "readwrite");
-            const store = transaction.objectStore("patients");
+        if (existingPatients.length > 0) {
+            console.log(`Database already contains ${existingPatients.length} patients. Skipping JSON load.`);
+            return; // Stop if data already exists
+        }
 
-            data.forEach(async (patient) => {
-                const encryptedNHS = secureEncrypt(patient.NHS);
-                const request = store.get(encryptedNHS);
+        console.log("Database is empty. Loading data from JSON...");
 
-                request.onsuccess = (event) => {
-                    if (!event.target.result) {
-                        console.log("Adding new patient:", patient.NHS);
-                        store.add({
-                            NHS: encryptedNHS,
-                            First: secureEncrypt(patient.First),
-                            Last: secureEncrypt(patient.Last),
-                            DOB: secureEncrypt(patient.DOB),
-                            Address: secureEncrypt(patient.Address),
-                            Email: secureEncrypt(patient.Email),
-                            Telephone: secureEncrypt(patient.Telephone),
-                            Gender: secureEncrypt(patient.Gender),
-                            Title: secureEncrypt(patient.Title),
-                        });
-                    } else {
-                        console.log(`Duplicate found: ${patient.NHS}. Skipping.`);
-                    }
+        // Load admin data
+        fetch('/admin.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Admin data not found');
+                return response.json();
+            })
+            .then(data => {
+                const encryptedData = data.map(user => ({
+                    ...user,
+                    password: secureEncrypt(user.password)
+                }));
+                storeData("administrators", encryptedData);
+            })
+            .catch(error => console.error("Failed to retrieve admin data:", error));
+
+        // Load doctor data
+        fetch('/doctor.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Doctor data not found');
+                return response.json();
+            })
+            .then(data => {
+                const encryptedData = data.map(user => ({
+                    ...user,
+                    password: secureEncrypt(user.password)
+                }));
+                storeData("doctors", encryptedData);
+            })
+            .catch(error => console.error("Failed to retrieve doctor data:", error));
+
+        // Load patient data
+        fetch('/patients.json')
+            .then(response => response.json())
+            .then(data => {
+                const uniquePatients = Array.from(
+                    new Map(data.map(patient => [patient.NHS, patient])).values()
+                ); // Deduplicate patients from the source
+
+                console.log(`Unique patients loaded: ${uniquePatients.length}`);
+
+                const patientTransaction = db.transaction(["patients"], "readwrite");
+                const patientStore = patientTransaction.objectStore("patients");
+
+                uniquePatients.forEach(patient => {
+                    patientStore.add({
+                        NHS: secureEncrypt(patient.NHS),
+                        First: secureEncrypt(patient.First),
+                        Last: secureEncrypt(patient.Last),
+                        DOB: secureEncrypt(patient.DOB),
+                        Address: secureEncrypt(patient.Address),
+                        Email: secureEncrypt(patient.Email),
+                        Telephone: secureEncrypt(patient.Telephone),
+                        Gender: secureEncrypt(patient.Gender),
+                        Title: secureEncrypt(patient.Title),
+                    });
+                });
+
+                patientTransaction.oncomplete = () => {
+                    console.log("Patient data loaded successfully.");
                 };
-            });
 
-            transaction.oncomplete = () => {
-                console.log("Data loading complete.");
-            };
+                patientTransaction.onerror = (event) => {
+                    console.error("Error loading patient data:", event.target.error);
+                };
+            })
+            .catch(error => console.error("Error fetching patient data:", error));
 
-            transaction.onerror = (event) => {
-                console.error("Error during data load:", event.target.error);
-            };
-        })
-        .catch(error => console.error("Error fetching patient data:", error));
+        // Load medication data
+        fetch('/medicines.json')
+            .then(response => {
+                if (!response.ok) throw new Error('Medication data not found');
+                return response.json();
+            })
+            .then(data => {
+                console.log("Medications loaded from JSON:", data);
+                storeData("medications", data);
+            })
+            .catch(error => console.error("Failed to retrieve medication data:", error));
+    };
 
-
-    // Load medication data
-    fetch('/medicines.json')
-        .then(response => {
-            if (!response.ok) throw new Error('Medication data not found');
-            return response.json();
-        })
-        .then(data => {
-            console.log("Medications loaded from JSON:", data); // Log the data to verify
-            storeData("medications", data);
-        })
-        .catch(error => console.error("Failed to retrieve medication data:", error));
+    request.onerror = (event) => {
+        console.error("Error checking existing data in database:", event.target.error);
+    };
 }
+
 
 function filterPatients() {
     const searchQuery = document.getElementById("searchBar").value.toLowerCase(); // Get the search query
