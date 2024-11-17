@@ -136,29 +136,56 @@ function loadPatients() {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const patients = event.target.result.map(patient => ({
-            ...patient,
-            NHS: secureDecrypt(patient.NHS) // Decrypt the NHS number for display
-        }));
+        const patients = event.target.result.map(patient => {
+            try {
+                // Try decrypting patient data
+                return {
+                    NHS: secureDecrypt(patient.NHS) || "Unknown",
+                    First: secureDecrypt(patient.First) || "Unknown",
+                    Last: secureDecrypt(patient.Last) || "Unknown",
+                    DOB: secureDecrypt(patient.DOB) || "Unknown",
+                    Address: secureDecrypt(patient.Address) || "Unknown",
+                };
+            } catch (error) {
+                console.error("Failed to decrypt patient data:", patient, error);
+                // If decryption fails, fallback to raw data
+                return {
+                    NHS: patient.NHS || "Unknown",
+                    First: patient.First || "Unknown",
+                    Last: patient.Last || "Unknown",
+                    DOB: patient.DOB || "Unknown",
+                    Address: patient.Address || "Unknown",
+                };
+            }
+        });
 
         const patientList = document.getElementById("patientList");
         patientList.innerHTML = "";
 
         patients.forEach(patient => {
             const listItem = document.createElement("li");
-            listItem.textContent = `${patient.First || "Unknown"} ${patient.Last || "Unknown"} - ${patient.NHS || "N/A"}`;
+            listItem.textContent = `${patient.First} ${patient.Last} - ${patient.NHS}`;
+            
             const editButton = document.createElement("button");
             editButton.textContent = "Edit";
             editButton.onclick = () => editPatient(patient);
+
             const deleteButton = document.createElement("button");
             deleteButton.textContent = "Delete";
             deleteButton.onclick = () => deletePatient(patient.NHS);
+
             listItem.appendChild(editButton);
             listItem.appendChild(deleteButton);
             patientList.appendChild(listItem);
         });
     };
+
+    request.onerror = (event) => {
+        console.error("Failed to load patients for admin panel:", event.target.error);
+    };
 }
+
+
 
 
 
@@ -483,25 +510,58 @@ function loadPatients() {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const patients = event.target.result;
+        const patients = event.target.result.map(patient => {
+            // Helper function to validate and decrypt
+            const tryDecrypt = (value) => {
+                try {
+                    const decryptedValue = secureDecrypt(value);
+                    // Check if decryption produced a valid string
+                    if (decryptedValue && decryptedValue !== "Error") {
+                        return decryptedValue;
+                    }
+                } catch (error) {
+                    console.error("Failed to decrypt field:", value, error);
+                }
+                // Fallback to original value or "Unknown"
+                return value || "Unknown";
+            };
+
+            // Attempt to decrypt each field
+            return {
+                NHS: tryDecrypt(patient.NHS),
+                First: tryDecrypt(patient.First),
+                Last: tryDecrypt(patient.Last),
+                DOB: tryDecrypt(patient.DOB),
+                Address: tryDecrypt(patient.Address),
+            };
+        });
+
         const patientList = document.getElementById("patientList");
         patientList.innerHTML = "";
 
-        patients.forEach((patient) => {
+        patients.forEach(patient => {
             const listItem = document.createElement("li");
-            listItem.textContent = `${patient.First || "Unknown"} ${patient.Last || "Unknown"} - ${patient.NHS || "N/A"}`;
+            listItem.textContent = `${patient.First} ${patient.Last} - ${patient.NHS}`;
+
             const editButton = document.createElement("button");
             editButton.textContent = "Edit";
             editButton.onclick = () => editPatient(patient);
+
             const deleteButton = document.createElement("button");
             deleteButton.textContent = "Delete";
             deleteButton.onclick = () => deletePatient(patient.NHS);
+
             listItem.appendChild(editButton);
             listItem.appendChild(deleteButton);
             patientList.appendChild(listItem);
         });
     };
+
+    request.onerror = (event) => {
+        console.error("Failed to load patients for admin panel:", event.target.error);
+    };
 }
+
 
 function editPatient(patient) {
     const nhs = prompt("Edit NHS Number:", secureDecrypt(patient.NHS));
@@ -842,14 +902,14 @@ function secureEncrypt(plainText) {
 
 function secureDecrypt(cipherText) {
     try {
-        if (!cipherText) throw new Error("Cipher text is empty or undefined");
         const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
         return bytes.toString(CryptoJS.enc.Utf8);
     } catch (error) {
         console.error("Failed to decrypt text:", cipherText, error);
-        return "Unknown"; // Return a fallback value
+        return "Error";
     }
 }
+
 
 
 
