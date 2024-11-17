@@ -1,34 +1,20 @@
-/* CSS Variables for Theme */
 :root {
     --background-color: #272727;
-    /* Dark background for body */
     --panel-bg-color: #3b3b3b;
-    /* Dark background for panels */
     --panel-text-color: #f0f0f0;
-    /* Light text for panels */
-    --button-bg-color: #366922;
-    /* Green button background */
-    --button-bg-hover-color: #1d4b20;
-    /* Green button hover */
+    --button-bg-color: #46ad9c;
+    --button-bg-hover-color: #207567;
     --danger-button-color: #ff4c4c;
-    /* Red button background */
     --danger-button-hover-color: #811212;
-    /* Red button hover */
     --form-input-border: #555;
-    /* Input border color */
     --shadow-color: rgba(0, 0, 0, 0.5);
-    /* Shadow for panels */
     --logout-bg-color: #dd7979;
-    /* Logout button */
     --logout-bg-hover: #811212;
-    /* Logout button hover */
     --grid-bg-color: #3b3b3b;
-    /* Grid background */
     --grid-text-color: #fff;
-    /* Grid text color */
 }
 
-/* General Body Styling */
+
 body {
     color: var(--panel-text-color);
     font-family: Arial, sans-serif;
@@ -40,8 +26,6 @@ body {
     margin: 0;
     background-color: var(--background-color);
 }
-
-/* Headings */
 h2,
 h3 {
     text-align: center;
@@ -85,7 +69,7 @@ input {
     width: 90%;
     padding: 13px;
     margin-top: 8px;
-    border: 1px solid var(--form-input-border);
+
     border-radius: 4px;
     background-color: #444;
     color: var(--panel-text-color);
