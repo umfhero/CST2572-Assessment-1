@@ -13,6 +13,9 @@
 <body>
 
     <h2>NHS Secure Portal</h2>
+    <div id="logout-button" style="display: none;">
+        <button onclick="logout()">Logout</button>
+    </div>
 
     <div id="login-section">
         <h3>Sign in</h3>
@@ -42,38 +45,50 @@
         <p id="error-message" style="color: red;"></p>
     </div>
 
-    <div id="AdminPatientSection" style="display: none;">
-        <h3>Manage Patients</h3>
-        <ul id="patientList"></ul>
-        <form id="editPatientForm" style="display:none;">
-            <input id="patientName" type="text" placeholder="Name">
-            <input id="patientAddress" type="text" placeholder="Address">
-            <input id="patientDOB" type="text" placeholder="DOB">
-            <button id="savePatientButton" type="button">Save</button>
+    <div id="AdminFunctions" style="display: none;">
+        <h3>Admin Panel</h3>
+
+        <h4>Add New Patient</h4>
+        <form id="addPatientForm">
+            <input id="newPatientNHS" type="text" placeholder="NHS Number" required>
+            <input id="newPatientName" type="text" placeholder="Full Name" required>
+            <input id="newPatientAddress" type="text" placeholder="Address" required>
+            <input id="newPatientTelephone" type="text" placeholder="Telephone" required>
+            <input id="newPatientDOB" type="date" placeholder="Date of Birth" required>
+            <button type="button" onclick="addPatient()">Add Patient</button>
         </form>
+
+        <h4>Manage Existing Patients</h4>
+        <ul id="patientList"></ul>
     </div>
 
-    <div id="PatientAppointmentSection" style="display: none;">
-        <h3>Book Appointment</h3>
-        <input id="appointmentDate" type="date">
-        <button id="bookAppointmentButton">Book</button>
+    <div id="PatientFunctions" style="display: none;">
+        <h3>Patient Panel</h3>
+    
+        <h4>Book an Appointment</h4>
+        <form id="appointmentForm">
+            <label for="appointmentDate">Date:</label>
+            <input id="appointmentDate" type="date" required>
+            <label for="appointmentReason">Reason:</label>
+            <input id="appointmentReason" type="text" placeholder="Reason for appointment" required>
+            <button id="BookAppointment" type="button" onclick="bookAppointment(loggedInUser)">Book Appointment</button>
+        </form>
+    
+        <h4>Your Appointments</h4>
+        <ul id="appointmentList"></ul>
+    
+        <h4>Request Prescriptions</h4>
+        <select id="prescriptionDropdown" multiple></select>
+        <button id="RequestPrescriptions" type="button" onclick="requestPrescriptions()">Request Prescriptions</button>
+    
+        <h4>Your Information</h4>
+        <p id="patientInfo"></p>
+    
+        <h4>Medical Notes</h4>
+        <ul id="medicalNotes"></ul>
     </div>
 
-    <div id="PatientMedicationSection" style="display: none;">
-        <h3>Medications</h3>
-        <ul id="medicationList"></ul>
-    </div>
 
-    <div id="DoctorPatientHistorySection" style="display: none;">
-        <h3>Patient History</h3>
-        <ul id="patientHistoryList"></ul>
-    </div>
-
-    <div id="DoctorPatientNotesSection" style="display: none;">
-        <h3>Medical Notes</h3>
-        <textarea id="patientNote" placeholder="Add a note..."></textarea>
-        <button id="addNoteButton">Add Note</button>
-    </div>
 
 </body>
 

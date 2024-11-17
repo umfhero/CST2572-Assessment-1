@@ -50,3 +50,171 @@ button:hover {
     margin-top: 8px;
     cursor: pointer;
 }
+
+/* Admin Panel Wrapper */
+#AdminFunctions {
+    background-color: #e9e9e98c;
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 60%;
+
+}
+
+/* Section Headings */
+#AdminFunctions h3,
+#AdminFunctions h4 {
+    color: #333;
+    font-family: Arial, sans-serif;
+    margin-bottom: 15px;
+}
+
+/* Add New Patient Form */
+#addPatientForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+    width: 80%;
+}
+
+#addPatientForm input {
+    padding: 10px;
+    border: 1px solid #1d1212;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+#addPatientForm button {
+    padding: 10px 15px;
+    border: none;
+    background-color: #366922;
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+    width: 40%;
+    border-radius: 4px;
+    cursor: pointer;
+}
+/* Book Appointment Button */
+#BookAppointment {
+    width: 30%;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    border: none;
+    background-color: #366922;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#BookAppointment:hover {
+    background-color: #1d4b20;
+}
+
+/* Request Prescriptions Button */
+#RequestPrescriptions {
+    width: 30%;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    border: none;
+    background-color: #5a89c2;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+#RequestPrescriptions:hover {
+    background-color: #1a3d68;
+}
+
+/* Prescription Dropdown */
+#prescriptionDropdown {
+    width: 50%;
+    height: auto;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+#addPatientForm button:hover {
+    background-color: #1d4b20;
+}
+
+/* Patient List */
+#patientList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#patientList li {
+    width: 80%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #8d8d8d;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    background-color: #7e7d7d;
+}
+
+#patientList button {
+    padding: 10px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 20px;
+    margin-left: 10%;
+
+   
+}
+
+#patientList button:nth-child(1) {
+    background-color: #366922;
+    color: white;
+}
+
+#patientList button:nth-child(1):hover {
+    background-color: #1d4b20;
+}
+
+#patientList button:nth-child(2) {
+    background-color: #ff4c4c;
+    color: white;
+}
+
+#patientList button:nth-child(2):hover {
+    background-color: #811212;
+}
+
+
+/* logout sectiojn */
+#logout-button {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    margin-right: 2%;
+}
+
+#logout-button button {
+        cursor: pointer;
+    background-color: #dd7979;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+
+}
+
+#logout-button button:hover {
+    background-color: #811212;
+}
