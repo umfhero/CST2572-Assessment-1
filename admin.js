@@ -1,4 +1,3 @@
-// User data
 const users = [
   { username: "sheilah", password: "sheilah123" },
   { username: "joella", password: "joella123" },
@@ -24,6 +23,3 @@ function validateUser(username, password) {
   }
 }
 
-// Example usage
-console.log(validateUser("sheilah", "sheilah123")); // Output: Login successful!
-console.log(validateUser("john", "john123")); // Output: Invalid username or password.
