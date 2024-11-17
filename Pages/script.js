@@ -10,6 +10,7 @@ const DATABASE_NAME = "surgeryDatabase";
 const DATABASE_VERSION = 1;
 const ENCRYPTION_KEY = "t&{U8L[Kx27X"; // for encrypting sensitive info like passwords and NHS numbers
 
+// permissions for different user roles
 const permissions = {
     Admin: { canManagePatients: true },
     Patient: { canBookAppointments: true, canViewMedication: true },
@@ -33,7 +34,7 @@ function clearAndLoadData() {
 }
 
 
-// Initialize the IndexedDB database
+// initializes the database, creating tables if they don't exist
 function initializeDatabase() {
     const request = indexedDB.open(DATABASE_NAME, DATABASE_VERSION);
 
@@ -78,9 +79,8 @@ function initializeDatabase() {
 }
 
 
-
+// loads data from JSON files into the database
 function loadAndStoreData() {
-    // Check if patients data already exists
     const transaction = db.transaction(["patients"], "readonly");
     const store = transaction.objectStore("patients");
     const request = store.getAll();
@@ -90,12 +90,11 @@ function loadAndStoreData() {
 
         if (existingPatients.length > 0) {
             console.log(`Database already contains ${existingPatients.length} patients. Skipping JSON load.`);
-            return; // Stop if data already exists
+            return; // stop if data already is there
         }
 
         console.log("Database is empty. Loading data from JSON...");
-
-        // Load admin data
+        //fetching each .json file (couldnt figure out the web link way)
         fetch('/admin.json')
             .then(response => {
                 if (!response.ok) throw new Error('Admin data not found');
@@ -110,7 +109,7 @@ function loadAndStoreData() {
             })
             .catch(error => console.error("Failed to retrieve admin data:", error));
 
-        // Load doctor data
+
         fetch('/doctor.json')
             .then(response => {
                 if (!response.ok) throw new Error('Doctor data not found');
@@ -125,7 +124,7 @@ function loadAndStoreData() {
             })
             .catch(error => console.error("Failed to retrieve doctor data:", error));
 
-        // Load patient data
+ 
         fetch('/patients.json')
             .then(response => response.json())
             .then(data => {
@@ -162,7 +161,7 @@ function loadAndStoreData() {
             })
             .catch(error => console.error("Error fetching patient data:", error));
 
-        // Load medication data
+  
         fetch('/medicines.json')
         .then(response => {
             if (!response.ok) throw new Error('Medication data not found');
@@ -182,7 +181,7 @@ function loadAndStoreData() {
 
 
 function filterPatients() {
-    const searchQuery = document.getElementById("searchBar").value.toLowerCase(); // Get the search query
+    const searchQuery = document.getElementById("searchBar").value.toLowerCase(); 
     const patientListItems = document.querySelectorAll("#doctorPatientList li"); // Get all patient list items
 
     patientListItems.forEach((item) => {
@@ -798,7 +797,8 @@ function editPatient(patient) {
     transaction.onerror = (event) => {
         console.error("Failed to update patient:", event.target.error);
     };
-}
+
+}// migrates existing data (eg encrypts unencrypted fields) and removes duplicates
 function migrateData(callback) {
     const transaction = db.transaction(["patients"], "readwrite");
     const store = transaction.objectStore("patients");
@@ -1234,11 +1234,11 @@ function loadPatientInfo(user) {
 }
 
 
-
+// encrypts a string using a secure key (shouldnt be hardcoded i know)
 function secureEncrypt(plainText) {
     return CryptoJS.AES.encrypt(plainText, ENCRYPTION_KEY).toString();
 }
-
+// decrypts a string using the same secure key
 function secureDecrypt(cipherText) {
     try {
         const bytes = CryptoJS.AES.decrypt(cipherText, ENCRYPTION_KEY);
@@ -1251,7 +1251,7 @@ function secureDecrypt(cipherText) {
 
 
 
-
+//just returns escaped html incase of a xss attack
 function sanitize(input) {
     const element = document.createElement('div');
     element.innerText = input;
