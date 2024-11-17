@@ -64,7 +64,7 @@
 
     <div id="PatientFunctions" style="display: none;">
         <h3>Patient Panel</h3>
-    
+
         <h4>Book an Appointment</h4>
         <form id="appointmentForm">
             <label for="appointmentDate">Date:</label>
@@ -73,22 +73,21 @@
             <input id="appointmentReason" type="text" placeholder="Reason for appointment" required>
             <button id="BookAppointment" type="button" onclick="bookAppointment(loggedInUser)">Book Appointment</button>
         </form>
+
         <h4>Your Requested Prescriptions</h4>
         <ul id="requestedPrescriptionsList"></ul>
 
         <h4>Your Appointments</h4>
         <ul id="appointmentList"></ul>
-        
+
         <h4>Request Prescriptions</h4>
         <select id="prescriptionDropdown" multiple></select>
         <button id="RequestPrescriptions" type="button" onclick="requestPrescriptions(loggedInUser)">Request
             Prescriptions</button>
 
-    
         <h4>Your Information</h4>
         <div id="patientInfo" class="grid-container"></div>
 
-    
         <h4>Medical Notes</h4>
         <ul id="medicalNotes"></ul>
     </div>
@@ -102,15 +101,20 @@
                     oninput="filterPatients()" />
             </div>
 
-            <ul id="doctorPatientList"></ul> <!-- Ensure this ID matches in JS -->
+            <ul id="doctorPatientList"></ul>
+        </div>
+
+        <h4>Patient Details</h4>
+        <div id="patientDetails">
+            <h5>Notes</h5>
+            <ul id="notesList"></ul>
+            <button onclick="addPatientNote(selectedPatient)">Add Note</button>
+
+            <h5>Prescriptions</h5>
+            <ul id="medicinesList"></ul>
+            <button onclick="addPatientMedicine(selectedPatient)">Add Medicine</button>
         </div>
     </div>
-
-
-    </div>
-
-
-
 
 </body>
 

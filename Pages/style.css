@@ -366,8 +366,7 @@ h4 {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    align-items: center;
-    /* Center-align content, including buttons */
+    align-items: flex-start;
     padding: 15px;
     border: 1px solid var(--form-input-border);
     border-radius: 4px;
@@ -385,9 +384,7 @@ h4 {
     font-size: 1em;
     margin: 5px 0;
     width: 70%;
-    /* Buttons take up 70% width of their container */
-    text-align: center;
-    /* Center text inside buttons */
+    /* Ensure buttons take up the full width within the column */
 }
 
 #doctorPatientList button:nth-child(1) {
@@ -412,24 +409,4 @@ h4 {
 
 #doctorPatientList button:nth-child(3):hover {
     background-color: var(--danger-button-hover-color);
-}
-#search-container {
-    width: 95%;
-    margin: 0 auto 20px;
-    text-align: center;
-}
-
-#searchBar {
-    width: 100%;
-    padding: 10px;
-    font-size: 1em;
-    border: 1px solid var(--form-input-border);
-    border-radius: 4px;
-    background-color: #444;
-    color: var(--panel-text-color);
-    outline: none;
-}
-
-#searchBar::placeholder {
-    color: #888;
 }

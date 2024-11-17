@@ -161,15 +161,15 @@ function loadAndStoreData() {
 
         // Load medication data
         fetch('/medicines.json')
-            .then(response => {
-                if (!response.ok) throw new Error('Medication data not found');
-                return response.json();
-            })
-            .then(data => {
-                console.log("Medications loaded from JSON:", data);
-                storeData("medications", data);
-            })
-            .catch(error => console.error("Failed to retrieve medication data:", error));
+        .then(response => {
+            if (!response.ok) throw new Error('Medication data not found');
+            return response.json();
+        })
+        .then(data => {
+            console.log("Medications loaded from JSON:", data);
+            storeData("medications", data);
+        })
+        .catch(error => console.error("Failed to retrieve medication data:", error));
     };
 
     request.onerror = (event) => {
@@ -444,23 +444,41 @@ function loadAppointmentsForDoctor(patient) {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const appointments = event.target.result
-            .filter(app => secureDecrypt(app.NHS) === patient.NHS)
-            .map(app => ({
-                date: secureDecrypt(app.date),
-                reason: secureDecrypt(app.reason)
-            }));
+        const appointments = event.target.result.filter(app => {
+            try {
+                const decryptedNHS = secureDecrypt(app.NHS);
+                console.log(`Matching NHS: ${decryptedNHS} === ${patient.NHS}`);
+                return decryptedNHS === patient.NHS; // Match decrypted NHS
+            } catch (error) {
+                console.error("Error decrypting NHS for appointment:", error);
+                return false;
+            }
+        }).map(app => {
+            try {
+                return {
+                    date: secureDecrypt(app.date),
+                    reason: secureDecrypt(app.reason),
+                };
+            } catch (error) {
+                console.error("Error decrypting appointment fields:", error);
+                return null;
+            }
+        }).filter(Boolean); // Filter out any null results from failed decryption
 
-        let message = `Appointments for ${patient.First} ${patient.Last}:\n`;
-        appointments.forEach(app => {
-            message += `Date: ${formatDate(app.date)}, Reason: ${app.reason}\n`;
-        });
-
-        alert(message);
+        // Display the appointments
+        if (appointments.length === 0) {
+            alert(`No appointments found for ${patient.First} ${patient.Last}`);
+        } else {
+            let message = `Appointments for ${patient.First} ${patient.Last}:\n`;
+            appointments.forEach(app => {
+                message += `Date: ${formatDate(app.date)}, Reason: ${app.reason}\n`;
+            });
+            alert(message);
+        }
     };
 
     request.onerror = (event) => {
-        console.error("Failed to load appointments for patient:", event.target.error);
+        console.error("Error retrieving appointments:", event.target.error);
     };
 }
 
@@ -471,25 +489,97 @@ function loadPrescriptionsForDoctor(patient) {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const prescriptions = event.target.result
-            .filter(pres => secureDecrypt(pres.NHS) === patient.NHS)
-            .map(pres => ({
-                medication: secureDecrypt(pres.prescription),
-                dateRequested: secureDecrypt(pres.timestamp)
-            }));
+        const allPrescriptions = event.target.result;
 
-        let message = `Prescriptions for ${patient.First} ${patient.Last}:\n`;
-        prescriptions.forEach(pres => {
-            message += `Medication: ${pres.medication}, Requested On: ${formatDate(pres.dateRequested)}\n`;
+        console.log("All prescriptions from DB:", allPrescriptions); // Log all retrieved prescriptions
+
+        // Filter prescriptions for the specific patient
+        const prescriptions = allPrescriptions.filter((pres) => {
+            const decryptedNHS = secureDecrypt(pres.NHS);
+            console.log("Decrypted NHS:", decryptedNHS, "Expected:", patient.NHS);
+
+            if (decryptedNHS === patient.NHS) {
+                console.log("Matching prescription found:", pres);
+                return true;
+            } else {
+                console.log("No match for prescription:", pres);
+                return false;
+            }
         });
 
-        alert(message);
+        console.log("Filtered prescriptions for patient:", prescriptions); // Log filtered prescriptions
+
+        if (prescriptions.length === 0) {
+            alert(`No prescriptions found for ${patient.First} ${patient.Last}`);
+        } else {
+            let message = `Prescriptions for ${patient.First} ${patient.Last}:\n`;
+            prescriptions.forEach((pres) => {
+                const decryptedPrescriptions = pres.prescriptions.map(secureDecrypt);
+                const decryptedTimestamp = secureDecrypt(pres.timestamp);
+
+                message += `Medications: ${decryptedPrescriptions.join(", ")}, Requested On: ${formatDate(decryptedTimestamp)}\n`;
+            });
+            alert(message);
+        }
     };
 
     request.onerror = (event) => {
-        console.error("Failed to load prescriptions for patient:", event.target.error);
+        console.error("Error retrieving prescriptions:", event.target.error);
     };
 }
+
+
+
+
+
+
+function loadAppointmentsForDoctor(patient) {
+    const transaction = db.transaction(["appointments"], "readonly");
+    const store = transaction.objectStore("appointments");
+    const request = store.getAll();
+
+    request.onsuccess = (event) => {
+        const appointments = event.target.result.filter(app => {
+            try {
+                const decryptedNHS = secureDecrypt(app.NHS);
+                console.log(`Decrypted NHS: ${decryptedNHS}`); // Log here
+                console.log(`Matching NHS: ${decryptedNHS} === ${patient.NHS}`); // Log here
+                return decryptedNHS === patient.NHS; // Match decrypted NHS
+            } catch (error) {
+                console.error("Error decrypting NHS for appointment:", error);
+                return false;
+            }
+        }).map(app => {
+            try {
+                console.log("Decrypted Appointment Date:", secureDecrypt(app.date)); // Log here
+                console.log("Decrypted Appointment Reason:", secureDecrypt(app.reason)); // Log here
+                return {
+                    date: secureDecrypt(app.date),
+                    reason: secureDecrypt(app.reason),
+                };
+            } catch (error) {
+                console.error("Error decrypting appointment fields:", error);
+                return null;
+            }
+        }).filter(Boolean); // Filter out any null results from failed decryption
+
+        // Display the appointments
+        if (appointments.length === 0) {
+            alert(`No appointments found for ${patient.First} ${patient.Last}`);
+        } else {
+            let message = `Appointments for ${patient.First} ${patient.Last}:\n`;
+            appointments.forEach(app => {
+                message += `Date: ${formatDate(app.date)}, Reason: ${app.reason}\n`;
+            });
+            alert(message);
+        }
+    };
+
+    request.onerror = (event) => {
+        console.error("Error retrieving appointments:", event.target.error);
+    };
+}
+
 
 
 function isEncrypted(value) {
@@ -502,68 +592,46 @@ function isEncrypted(value) {
 }
 
 function loadDoctorPatients() {
-    const transaction = db.transaction(["patients"], "readwrite"); // Allow writing to re-encrypt unencrypted data
+    const transaction = db.transaction(["patients"], "readonly");
     const store = transaction.objectStore("patients");
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const rawPatients = event.target.result; // Retrieve all patients
-        console.log("Raw patient data:", rawPatients);
-
-        const patients = rawPatients.map(patient => {
-            // Check if data is encrypted or not
-            let isEncrypted = false;
-            try {
-                secureDecrypt(patient.First); // Try decrypting a field
-                isEncrypted = true;
-            } catch (error) {
-                isEncrypted = false;
-            }
-
-            // If unencrypted, encrypt fields and update the record in IndexedDB
-            if (!isEncrypted) {
-                console.log("Encrypting unencrypted patient record:", patient);
-                patient = {
-                    NHS: secureEncrypt(patient.NHS || ""),
-                    Title: secureEncrypt(patient.Title || ""),
-                    First: secureEncrypt(patient.First || ""),
-                    Last: secureEncrypt(patient.Last || ""),
-                    DOB: secureEncrypt(patient.DOB || ""),
-                    Gender: secureEncrypt(patient.Gender || ""),
-                    Address: secureEncrypt(patient.Address || ""),
-                    Email: secureEncrypt(patient.Email || ""),
-                    Telephone: secureEncrypt(patient.Telephone || "")
-                };
-
-                // Save the encrypted patient back to IndexedDB
-                store.put(patient);
-            }
-
-            // Return the decrypted patient data for display
+        const patients = event.target.result.map(patient => {
+            // Decrypt patient data for rendering
             return {
-                NHS: secureDecrypt(patient.NHS || ""),
-                Title: secureDecrypt(patient.Title || ""),
-                First: secureDecrypt(patient.First || ""),
-                Last: secureDecrypt(patient.Last || ""),
-                DOB: secureDecrypt(patient.DOB || ""),
-                Gender: secureDecrypt(patient.Gender || ""),
-                Address: secureDecrypt(patient.Address || ""),
-                Email: secureDecrypt(patient.Email || ""),
-                Telephone: secureDecrypt(patient.Telephone || "")
+                NHS: secureDecrypt(patient.NHS),
+                Title: secureDecrypt(patient.Title),
+                First: secureDecrypt(patient.First),
+                Last: secureDecrypt(patient.Last),
+                DOB: secureDecrypt(patient.DOB),
+                Address: secureDecrypt(patient.Address),
+                Gender: secureDecrypt(patient.Gender),
             };
         });
 
-        console.log("Decrypted patient data:", patients);
-
-        // Update the Doctor's UI
         const doctorPatientList = document.getElementById("doctorPatientList");
         doctorPatientList.innerHTML = ""; // Clear existing entries
 
         patients.forEach(patient => {
             const listItem = document.createElement("li");
-            listItem.textContent = `Name: ${patient.Title} ${patient.First} ${patient.Last} | NHS: ${patient.NHS}`;
 
-            // Action buttons for each patient
+            // Patient Header
+            const header = document.createElement("div");
+            header.innerHTML = `<strong>Name:</strong> ${patient.Title} ${patient.First} ${patient.Last} | <strong>NHS:</strong> ${patient.NHS}`;
+            listItem.appendChild(header);
+
+            // Patient Details Section
+            const details = document.createElement("div");
+            details.classList.add("patient-details");
+            details.innerHTML = `
+                <p><strong>DOB:</strong> ${patient.DOB}</p>
+                <p><strong>Address:</strong> ${patient.Address}</p>
+                <p><strong>Gender:</strong> ${patient.Gender}</p>
+            `;
+            listItem.appendChild(details);
+
+            // Buttons for Actions
             const viewAppointmentsButton = document.createElement("button");
             viewAppointmentsButton.textContent = "View Appointments";
             viewAppointmentsButton.onclick = () => loadAppointmentsForDoctor(patient);
@@ -573,23 +641,35 @@ function loadDoctorPatients() {
             viewPrescriptionsButton.onclick = () => loadPrescriptionsForDoctor(patient);
 
             const editNotesButton = document.createElement("button");
-            editNotesButton.textContent = "Edit Notes";
+            editNotesButton.textContent = "Add/Edit Notes";
             editNotesButton.onclick = () => editPatientNotes(patient);
 
-            // Append buttons to the list item
+            // Append Buttons
             listItem.appendChild(viewAppointmentsButton);
             listItem.appendChild(viewPrescriptionsButton);
             listItem.appendChild(editNotesButton);
 
+            // Append to List
             doctorPatientList.appendChild(listItem);
         });
     };
 
     request.onerror = (event) => {
-        console.error("Failed to load patients for doctor panel:", event.target.error);
+        console.error("Failed to load patients:", event.target.error);
     };
 }
 
+
+function togglePatientDetails(button) {
+    const detailsSection = button.closest('li').querySelector('.patient-details');
+    if (detailsSection.style.display === 'none' || detailsSection.style.display === '') {
+        detailsSection.style.display = 'block';
+        button.textContent = 'Hide Details';
+    } else {
+        detailsSection.style.display = 'none';
+        button.textContent = 'View Details';
+    }
+}
 
 
 
@@ -916,11 +996,9 @@ function loadMedicines() {
 
 
 
-// Request Prescription
 function requestPrescriptions(user) {
     if (!user) {
         alert("No user is logged in.");
-        console.error("Error: No user object provided to requestPrescriptions.");
         return;
     }
 
@@ -933,15 +1011,16 @@ function requestPrescriptions(user) {
     }
 
     const newPrescriptionRecord = {
-        NHS: secureEncrypt(user.NHS), // Encrypt NHS number
-        prescriptions: selectedOptions.map(secureEncrypt), // Encrypt each prescription
-        timestamp: new Date().toISOString() // Add a timestamp
+        NHS: secureEncrypt(user.NHS), // Encrypted NHS
+        plainNHS: user.NHS, // Plain NHS (for debugging and matching)
+        prescriptions: selectedOptions.map(secureEncrypt), // Encrypted prescriptions
+        timestamp: secureEncrypt(new Date().toISOString()) // Encrypted timestamp
     };
 
     const transaction = db.transaction(["prescriptions"], "readwrite");
     const store = transaction.objectStore("prescriptions");
 
-    store.add(newPrescriptionRecord); // Add the new record to the store
+    store.add(newPrescriptionRecord);
 
     transaction.oncomplete = () => {
         alert("Prescription request submitted successfully!");
@@ -959,6 +1038,9 @@ function requestPrescriptions(user) {
 
 
 
+
+
+
 function loadRequestedPrescriptions(user) {
     if (!user) {
         console.error("No user is logged in.");
@@ -970,14 +1052,22 @@ function loadRequestedPrescriptions(user) {
     const request = store.getAll();
 
     request.onsuccess = (event) => {
-        const prescriptions = event.target.result.filter(prescription => secureDecrypt(prescription.NHS) === user.NHS);
+        const prescriptions = event.target.result;
+        console.log("All prescriptions from DB:", prescriptions);
+
+        // Use plainNHS for matching
+        const filteredPrescriptions = prescriptions.filter(prescription => {
+            console.log("Checking prescription for plainNHS:", prescription.plainNHS, "Expected:", user.NHS);
+            return prescription.plainNHS === user.NHS;
+        });
+
+        console.log("Filtered prescriptions for patient:", filteredPrescriptions);
 
         const requestedPrescriptionsList = document.getElementById("requestedPrescriptionsList");
-        requestedPrescriptionsList.innerHTML = ""; // Clear existing list
+        requestedPrescriptionsList.innerHTML = "";
 
-        prescriptions.forEach(prescription => {
+        filteredPrescriptions.forEach(prescription => {
             const decryptedPrescriptions = prescription.prescriptions.map(secureDecrypt);
-
             const listItem = document.createElement("li");
             listItem.textContent = `Requested: ${decryptedPrescriptions.join(", ")}`;
             requestedPrescriptionsList.appendChild(listItem);
@@ -986,6 +1076,116 @@ function loadRequestedPrescriptions(user) {
 
     request.onerror = (event) => {
         console.error("Failed to load requested prescriptions:", event.target.error);
+    };
+}
+function loadPatientNotes(patient) {
+    const transaction = db.transaction(["notes"], "readonly");
+    const store = transaction.objectStore("notes");
+    const request = store.getAll();
+
+    request.onsuccess = (event) => {
+        const allNotes = event.target.result;
+
+        // Filter notes by patient's NHS
+        const patientNotes = allNotes.filter(note => note.plainNHS === patient.NHS);
+
+        const notesList = document.getElementById("notesList");
+        notesList.innerHTML = ""; // Clear existing notes
+
+        patientNotes.forEach(note => {
+            const listItem = document.createElement("li");
+            listItem.textContent = `${secureDecrypt(note.note)} (Added on: ${new Date(note.timestamp).toLocaleString()})`;
+            notesList.appendChild(listItem);
+        });
+    };
+
+    request.onerror = (event) => {
+        console.error("Failed to load notes for patient:", event.target.error);
+    };
+}
+function loadPatientMedicines(patient) {
+    const transaction = db.transaction(["prescriptions"], "readonly");
+    const store = transaction.objectStore("prescriptions");
+    const request = store.getAll();
+
+    request.onsuccess = (event) => {
+        const allPrescriptions = event.target.result;
+
+        // Filter prescriptions by patient's NHS
+        const patientPrescriptions = allPrescriptions.filter(prescription => prescription.plainNHS === patient.NHS);
+
+        const medicinesList = document.getElementById("medicinesList");
+        medicinesList.innerHTML = ""; // Clear existing medicines
+
+        patientPrescriptions.forEach(prescription => {
+            const listItem = document.createElement("li");
+            listItem.textContent = `${secureDecrypt(prescription.medicine)} (Added on: ${new Date(prescription.timestamp).toLocaleString()})`;
+            medicinesList.appendChild(listItem);
+        });
+    };
+
+    request.onerror = (event) => {
+        console.error("Failed to load medicines for patient:", event.target.error);
+    };
+}
+
+function addPatientMedicine(patient) {
+    const medicine = prompt(`Enter the medicine for ${patient.First} ${patient.Last}:`, "");
+    if (!medicine) {
+        alert("Medicine cannot be empty.");
+        return;
+    }
+
+    const newPrescription = {
+        NHS: secureEncrypt(patient.NHS), // Encrypt NHS number
+        plainNHS: patient.NHS, // Add plain NHS for easy matching
+        medicine: secureEncrypt(medicine), // Encrypt the medicine
+        timestamp: new Date().toISOString() // Add a timestamp
+    };
+
+    const transaction = db.transaction(["prescriptions"], "readwrite");
+    const store = transaction.objectStore("prescriptions");
+
+    store.add(newPrescription);
+
+    transaction.oncomplete = () => {
+        alert("Medicine added successfully!");
+        loadPatientMedicines(patient); // Reload medicines for the patient
+    };
+
+    transaction.onerror = (event) => {
+        console.error("Failed to add medicine:", event.target.error);
+        alert("Failed to add medicine. Please try again.");
+    };
+}
+
+function addPatientNote(patient) {
+    const note = prompt(`Enter a note for ${patient.First} ${patient.Last}:`, "");
+    if (!note) {
+        alert("Note cannot be empty.");
+        return;
+    }
+
+    const newNote = {
+        NHS: secureEncrypt(patient.NHS), // Encrypt NHS number
+        plainNHS: patient.NHS, // Add plain NHS for easy matching
+        note: secureEncrypt(note), // Encrypt the note
+        timestamp: new Date().toISOString() // Add a timestamp
+    };
+
+    const transaction = db.transaction(["notes"], "readwrite");
+    const store = transaction.objectStore("notes");
+
+    store.add(newNote);
+
+    transaction.oncomplete = () => {
+        alert("Note added successfully!");
+        loadPatientNotes(patient); // Reload notes for the patient
+    };
+
+    transaction.onerror = (event) => {
+        console.error("Failed to add note:", event.target.error);
+        alert("Failed to add note. Please try again.");
     };
 }
 
