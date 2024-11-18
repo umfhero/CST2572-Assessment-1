@@ -126,7 +126,7 @@ function loadAndStoreData() {
                 const patientStore = patientTransaction.objectStore("patients");
 
                 uniquePatients.forEach(patient => {
-                    patientStore.add({
+                    const encryptedPatient = {
                         NHS: secureEncrypt(patient.NHS),
                         First: secureEncrypt(patient.First),
                         Last: secureEncrypt(patient.Last),
@@ -136,8 +136,11 @@ function loadAndStoreData() {
                         Telephone: secureEncrypt(patient.Telephone),
                         Gender: secureEncrypt(patient.Gender),
                         Title: secureEncrypt(patient.Title),
-                    });
+                    };
+                    console.log("Storing encrypted patient:", encryptedPatient);
+                    patientStore.add(encryptedPatient);
                 });
+
 
                 patientTransaction.oncomplete = () => {
                     console.log("Patient data loaded successfully.");
@@ -703,16 +706,15 @@ function loadPatients() {
             const tryDecrypt = (value) => {
                 try {
                     const decryptedValue = secureDecrypt(value);
-                    // Check if decryption produced a valid string
                     if (decryptedValue && decryptedValue !== "Error") {
                         return decryptedValue;
                     }
                 } catch (error) {
-                    console.error("Failed to decrypt field:", value, error);
+                    console.error("Decryption failed for field:", value, error);
                 }
-                // Fallback to original value or "Unknown"
                 return value || "Unknown";
             };
+
 
             // Attempt to decrypt each field
             return {
@@ -752,41 +754,55 @@ function loadPatients() {
 
 
 function editPatient(patient) {
-    const nhs = prompt("Edit NHS Number:", secureDecrypt(patient.NHS));
-    const name = prompt("Edit Name:", `${secureDecrypt(patient.First)} ${secureDecrypt(patient.Last)}`);
-    const address = prompt("Edit Address:", secureDecrypt(patient.Address));
-    const telephone = prompt("Edit Telephone:", secureDecrypt(patient.Telephone));
-    const dob = prompt("Edit DOB (dd/mm/yyyy):", secureDecrypt(patient.DOB));
+    console.log("Editing patient (raw):", patient);
 
-    if (!nhs || !name || !address || !telephone || !dob) {
-        alert("All fields must be filled!");
-        return;
+    try {
+        const nhs = secureDecrypt(patient.NHS);
+        const firstName = secureDecrypt(patient.First);
+        const lastName = secureDecrypt(patient.Last);
+        const dob = secureDecrypt(patient.DOB);
+        const address = secureDecrypt(patient.Address);
+
+        console.log("Decrypted patient details:", { nhs, firstName, lastName, dob, address });
+
+        const updatedNHS = prompt("Edit NHS Number:", nhs);
+        const updatedName = prompt("Edit Name:", `${firstName} ${lastName}`);
+        const updatedAddress = prompt("Edit Address:", address);
+        const updatedDOB = prompt("Edit DOB (dd/mm/yyyy):", dob);
+
+        if (!updatedNHS || !updatedName || !updatedAddress || !updatedDOB) {
+            alert("All fields must be filled!");
+            return;
+        }
+
+        const [updatedFirstName, updatedLastName] = updatedName.split(" ");
+        const updatedPatient = {
+            ...patient,
+            NHS: secureEncrypt(updatedNHS),
+            First: secureEncrypt(updatedFirstName || ""),
+            Last: secureEncrypt(updatedLastName || ""),
+            DOB: secureEncrypt(updatedDOB),
+            Address: secureEncrypt(updatedAddress),
+        };
+
+        const transaction = db.transaction(["patients"], "readwrite");
+        const store = transaction.objectStore("patients");
+        store.put(updatedPatient);
+
+        transaction.oncomplete = () => {
+            alert("Patient updated successfully!");
+            loadPatients();
+        };
+
+        transaction.onerror = (event) => {
+            console.error("Failed to update patient:", event.target.error);
+        };
+    } catch (error) {
+        console.error("Error during patient editing:", error);
+        alert("Failed to edit patient details due to decryption error.");
     }
-
-    const updatedPatient = {
-        ...patient,
-        NHS: secureEncrypt(nhs),
-        First: secureEncrypt(name.split(" ")[0]),
-        Last: secureEncrypt(name.split(" ")[1] || ""),
-        Address: secureEncrypt(address),
-        Telephone: secureEncrypt(telephone),
-        DOB: secureEncrypt(dob)
-    };
-
-    const transaction = db.transaction(["patients"], "readwrite");
-    const store = transaction.objectStore("patients");
-    store.put(updatedPatient);
-
-    transaction.oncomplete = () => {
-        alert("Patient updated successfully!");
-        loadPatients();
-    };
-
-    transaction.onerror = (event) => {
-        console.error("Failed to update patient:", event.target.error);
-    };
-
 }
+
 
 // migrates existing data (eg encrypts unencrypted fields) and removes duplicates
 function migrateData(callback) {
